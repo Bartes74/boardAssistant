@@ -1,0 +1,12 @@
+rules:
+  - id: no-secret-logging
+    patterns:
+      - pattern-inside: |
+          console.$LOG($ARGS)
+      - pattern: console.$LOG($SECRET)
+      - metavariable-pattern:
+          metavariable: $SECRET
+          pattern: /(SUPABASE|SERVICE_ROLE|ACCESS_TOKEN|JWT|AUTH|PASSWORD)/i
+    message: "Nie loguj sekretów Supabase ani tokenów auth."
+    languages: [javascript, typescript]
+    severity: ERROR

@@ -1,0 +1,187 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["pgVector"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgvector(map: "vector", dimensions: 768)]
+}
+
+enum SourceType {
+  rss
+  api
+  html
+  pdf
+  internal_dms
+  other
+}
+
+enum DocumentStatus {
+  new
+  updated
+  archived
+}
+
+enum TopicStatus {
+  new
+  growing
+  stable
+  expired
+}
+
+enum UserRole {
+  BOARD_MEMBER
+  ADMIN
+  SECURITY_OFFICER
+}
+
+model Source {
+  id              String        @id @default(uuid()) @db.Uuid @map("source_id")
+  type            SourceType
+  name            String
+  baseUrl         String?       @map("base_url")
+  authConfig      Json?         @map("auth_config")
+  defaultLanguage String?       @map("default_language")
+  refreshInterval Int?          @map("refresh_interval")
+  lastFetchedAt   DateTime?     @map("last_fetched_at")
+  active          Boolean       @default(true)
+  documents       Document[]
+  rawDocuments    RawDocument[]
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+}
+
+model RawDocument {
+  id          String   @id @default(uuid()) @db.Uuid @map("raw_id")
+  sourceId    String   @db.Uuid @map("source_id")
+  source      Source   @relation(fields: [sourceId], references: [id])
+  fetchedAt   DateTime @map("fetched_at")
+  rawLocation String   @map("raw_location")
+  contentHash String?  @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+}
+
+model Document {
+  id           String          @id @default(uuid()) @db.Uuid @map("doc_id")
+  sourceId     String          @db.Uuid @map("source_id")
+  source       Source          @relation(fields: [sourceId], references: [id])
+  canonicalUrl String?         @map("canonical_url")
+  title        String
+  author       String?
+  publishedAt  DateTime?       @map("published_at")
+  ingestedAt   DateTime        @default(now()) @map("ingested_at")
+  lang         String?
+  docType      String?         @map("doc_type")
+  summary      String?
+  status       DocumentStatus  @default(new)
+  topicId      String?         @db.Uuid @map("topic_id")
+  topic        Topic?          @relation(fields: [topicId], references: [id])
+  chunks       ChunkEmbedding[]
+  metadata     Json?           @map("metadata")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+
+  @@unique([canonicalUrl], map: "documents_canonical_url_key")
+  @@index([topicId], map: "documents_topic_id_idx")
+}
+
+model ChunkEmbedding {
+  id         String   @id @default(uuid()) @db.Uuid @map("chunk_id")
+  docId      String   @db.Uuid @map("doc_id")
+  document   Document @relation(fields: [docId], references: [id])
+  chunkIndex Int      @map("chunk_index")
+  text       String
+  embedding  Vector
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([docId, chunkIndex], map: "chunk_embeddings_doc_idx")
+}
+
+model Topic {
+  id                String           @id @default(uuid()) @db.Uuid @map("topic_id")
+  title             String
+  description       String?
+  createdAt         DateTime         @default(now()) @map("created_at")
+  lastEventAt       DateTime?        @map("last_event_at")
+  topicStatus       TopicStatus      @default(new) @map("topic_status")
+  tags              Json?
+  centroidEmbedding Vector?          @map("centroid_embedding")
+  documents         Document[]
+  userTopicScores   UserTopicScore[]
+}
+
+model UserProfile {
+  id               String           @id @default(uuid()) @db.Uuid @map("user_id")
+  role             UserRole
+  email            String?
+  regions          String[]
+  industries       String[]
+  competitorsWatch String[]         @map("competitors_watchlist")
+  keywordsInclude  String[]         @map("keywords_include")
+  keywordsExclude  String[]         @map("keywords_exclude")
+  detailLevel      String           @map("detail_level")
+  responseStyle    Json             @map("response_style")
+  language         String           @default("pl")
+  sourcePrefs      Json?            @map("source_prefs")
+  settings         Json?            @map("settings")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+  topicScores      UserTopicScore[]
+  queries          UserQueryLog[]
+  recommendations  UserRecommendation[]
+}
+
+model UserTopicScore {
+  userId            String      @db.Uuid @map("user_id")
+  topicId           String      @db.Uuid @map("topic_id")
+  user              UserProfile @relation(fields: [userId], references: [id])
+  topic             Topic       @relation(fields: [topicId], references: [id])
+  score             Float
+  lastSeenAt        DateTime?   @map("last_seen_at")
+  interactionsCount Int         @default(0) @map("interactions_count")
+  pinned            Boolean     @default(false)
+  hidden            Boolean     @default(false)
+  createdAt         DateTime    @default(now()) @map("created_at")
+  updatedAt         DateTime    @updatedAt @map("updated_at")
+
+  @@id([userId, topicId])
+}
+
+model UserQueryLog {
+  id             String      @id @default(uuid()) @db.Uuid
+  userId         String      @db.Uuid @map("user_id")
+  user           UserProfile @relation(fields: [userId], references: [id])
+  question       String
+  responseSummary String?    @map("response_summary")
+  topicIds       String[]    @db.Uuid @map("topic_ids")
+  fromDate       DateTime?   @map("from_date")
+  toDate         DateTime?   @map("to_date")
+  metadata       Json?
+  createdAt      DateTime    @default(now()) @map("created_at")
+}
+
+model UserRecommendation {
+  id        String      @id @default(uuid()) @db.Uuid
+  userId    String      @db.Uuid @map("user_id")
+  user      UserProfile @relation(fields: [userId], references: [id])
+  topicId   String?     @db.Uuid @map("topic_id")
+  topic     Topic?      @relation(fields: [topicId], references: [id])
+  title     String
+  actions   Json
+  createdAt DateTime    @default(now()) @map("created_at")
+  expiresAt DateTime?   @map("expires_at")
+}
+
+model AuditLog {
+  id         String    @id @default(uuid()) @db.Uuid
+  actorId    String?   @db.Uuid @map("actor_id")
+  actorRole  UserRole?
+  action     String
+  targetType String    @map("target_type")
+  targetId   String?   @db.Uuid @map("target_id")
+  metadata   Json?
+  createdAt  DateTime  @default(now()) @map("created_at")
+}

@@ -1,0 +1,7 @@
+packages:
+  - "backend"
+  - "rag-service"
+  - "frontend"
+  - "tools"
+  - "observability"
+  - "packages/*"

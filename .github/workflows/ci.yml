@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+
+jobs:
+  lint-test-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+      - name: Lint backend
+        run: pnpm --filter ./backend run lint
+      - name: Lint frontend
+        run: pnpm --filter ./frontend run lint
+      - name: Test backend
+        run: pnpm --filter ./backend run test
+      - name: Test frontend
+        run: pnpm --filter ./frontend run test
+      - name: Test rag-service
+        run: pnpm --filter ./rag-service run test
+      - name: Build backend
+        run: pnpm --filter ./backend run build
+      - name: Build frontend
+        run: pnpm --filter ./frontend run build
+
+  semgrep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            --config p/ci --config semgrep_rules/

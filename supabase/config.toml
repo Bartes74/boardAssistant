@@ -1,0 +1,18 @@
+project_id = "boardassistant"
+
+[api]
+schemas = ["public"]
+extra_search_path = ["extensions"]
+port = 54321
+
+[db]
+port = 54322
+major_version = 15
+
+[studio]
+port = 54323
+
+[functions]
+port = 54324
+timeout = 26
+max_response_size = 10

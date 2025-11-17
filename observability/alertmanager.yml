@@ -1,0 +1,10 @@
+route:
+  receiver: 'devops'
+  group_by: ['alertname']
+  repeat_interval: 2h
+
+receivers:
+  - name: 'devops'
+    webhook_configs:
+      - url: 'http://core-service:3000/api/internal/alerts'
+        send_resolved: true

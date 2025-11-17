@@ -1,0 +1,144 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: boardassistant_postgres
+    environment:
+      POSTGRES_DB: boardassistant
+      POSTGRES_USER: board
+      POSTGRES_PASSWORD: board
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "board"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address :9001
+    environment:
+      MINIO_ROOT_USER: board
+      MINIO_ROOT_PASSWORD: boardboard
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+  core-service:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://board:board@postgres:5432/boardassistant
+      RAG_SERVICE_URL: http://rag-service:8000
+      CORS_ALLOW_ORIGINS: http://localhost:5173
+      OIDC_ISSUER: http://keycloak:8080/realms/boardassistant
+      OIDC_AUDIENCE: boardassistant-api
+      METRICS_PORT: 9100
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rag-service:
+        condition: service_started
+    ports:
+      - "3000:3000"
+    command: ["node", "dist/main.js"]
+
+  rag-service:
+    build:
+      context: rag-service
+    environment:
+      DATABASE_URL: postgresql+asyncpg://board:board@postgres:5432/boardassistant
+      PROMETHEUS_PORT: 9101
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    depends_on:
+      core-service:
+        condition: service_started
+    ports:
+      - "5173:5173"
+
+  n8n:
+    image: n8nio/n8n:1
+    environment:
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: admin
+      N8N_BASIC_AUTH_PASSWORD: admin
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_DATABASE: boardassistant
+      DB_POSTGRESDB_USER: board
+      DB_POSTGRESDB_PASSWORD: board
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      core-service:
+        condition: service_started
+
+  pushgateway:
+    image: prom/pushgateway:latest
+    ports:
+      - "9091:9091"
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3001:3000"
+    depends_on:
+      prometheus:
+        condition: service_started
+
+  loki:
+    image: grafana/loki:2.9.5
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+    volumes:
+      - ./observability/loki-config.yml:/etc/loki/local-config.yaml:ro
+    ports:
+      - "3100:3100"
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    volumes:
+      - ./observability/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    ports:
+      - "9093:9093"
+    depends_on:
+      prometheus:
+        condition: service_started
+
+volumes:
+  postgres_data:
+  minio_data:
+  n8n_data:
+  grafana_data:

@@ -1,0 +1,23 @@
+{
+  "buildCommand": "pnpm install && pnpm --filter ./backend build && pnpm --filter ./frontend build",
+  "outputDirectory": "frontend/dist",
+  "functions": {
+    "api/core-service.ts": {
+      "runtime": "nodejs18.x",
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  },
+  "rewrites": [
+    { "source": "/api/rag", "destination": "/api/rag.ts" },
+    { "source": "/api/:path*", "destination": "/api/core-service.ts" },
+    { "source": "/(.*)", "destination": "/frontend/dist/$1" }
+  ],
+  "env": {
+    "SUPABASE_URL": "@supabase_url",
+    "SUPABASE_ANON_KEY": "@supabase_anon_key",
+    "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_role_key",
+    "DATABASE_URL": "@supabase_database_url",
+    "RAG_SERVICE_URL": "https://" 
+  }
+}

@@ -1,0 +1,7 @@
+node_modules
+supabase/.temp
+supabase/.branches
+.env
+**/*.log
+observability/
+docker-compose.yml

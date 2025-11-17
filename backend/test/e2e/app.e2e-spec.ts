@@ -1,0 +1,23 @@
+import { beforeAll, describe, expect, it } from "vitest";
+import { INestApplication } from "@nestjs/common";
+import { Test } from "@nestjs/testing";
+import request from "supertest";
+import { AppModule } from "../../src/app.module";
+
+describe("CoreService e2e", () => {
+  let app: INestApplication;
+
+  beforeAll(async () => {
+    const moduleRef = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleRef.createNestApplication();
+    await app.init();
+  });
+
+  it("powinien udostępniać endpoint zdrowia", async () => {
+    const response = await request(app.getHttpServer()).get("/health");
+    expect(response.status).toBe(200);
+  });
+});
