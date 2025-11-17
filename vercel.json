@@ -1,6 +1,6 @@
 {
   "installCommand": "npx -y pnpm@9.12.0 install",
-  "buildCommand": "npx -y pnpm@9.12.0 --filter ./backend build && npx -y pnpm@9.12.0 --filter ./frontend build",
+  "buildCommand": "npx -y pnpm@9.12.0 --filter ./backend run generate && npx -y pnpm@9.12.0 --filter ./backend build && npx -y pnpm@9.12.0 --filter ./frontend build",
   "outputDirectory": "frontend/dist",
   "rewrites": [
     { "source": "/api/rag", "destination": "/api/rag.ts" },

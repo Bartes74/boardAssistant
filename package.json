@@ -9,7 +9,6 @@
   },
   "scripts": {
     "preinstall": "node tools/scripts/check-node-version.mjs",
-    "postinstall": "pnpm run generate",
     "generate": "pnpm -r --if-present run generate",
     "lint": "pnpm -r --workspace-concurrency=1 --if-present run lint",
     "test": "pnpm -r --if-present run test",
