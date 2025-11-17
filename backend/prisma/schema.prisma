@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
@@ -110,6 +111,7 @@ model Topic {
   centroidEmbedding Unsupported("vector")?          @map("centroid_embedding")
   documents         Document[]
   userTopicScores   UserTopicScore[]
+  recommendations   UserRecommendation[]
 }
 
 model UserProfile {
