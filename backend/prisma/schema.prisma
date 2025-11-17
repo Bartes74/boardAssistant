@@ -92,7 +92,7 @@ model ChunkEmbedding {
   document   Document @relation(fields: [docId], references: [id])
   chunkIndex Int      @map("chunk_index")
   text       String
-  embedding  Vector   @db.Vector(768)
+  embedding  Unsupported("vector")
   metadata   Json?
   createdAt  DateTime @default(now()) @map("created_at")
 
@@ -107,7 +107,7 @@ model Topic {
   lastEventAt       DateTime?        @map("last_event_at")
   topicStatus       TopicStatus      @default(new) @map("topic_status")
   tags              Json?
-  centroidEmbedding Vector?          @map("centroid_embedding") @db.Vector(768)
+  centroidEmbedding Unsupported("vector")?          @map("centroid_embedding")
   documents         Document[]
   userTopicScores   UserTopicScore[]
 }
