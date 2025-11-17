@@ -1,5 +1,6 @@
 {
-  "buildCommand": "pnpm install && pnpm --filter ./backend build && pnpm --filter ./frontend build",
+  "installCommand": "corepack enable pnpm && pnpm install",
+  "buildCommand": "pnpm --filter ./backend build && pnpm --filter ./frontend build",
   "outputDirectory": "frontend/dist",
   "rewrites": [
     { "source": "/api/rag", "destination": "/api/rag.ts" },
