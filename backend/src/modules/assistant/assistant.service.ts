@@ -36,7 +36,7 @@ export class AssistantService {
       const topicIds: string[] = Array.isArray(data?.topics)
         ? data.topics
             .map((topic: { id?: string }) => topic.id)
-            .filter((value): value is string => Boolean(value) && UUID_REGEX.test(value))
+            .filter((value: unknown): value is string => typeof value === "string" && UUID_REGEX.test(value))
         : [];
 
       const queryLog = await this.prisma.userQueryLog.create({

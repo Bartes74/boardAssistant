@@ -31,7 +31,7 @@ export class ProfilesService {
         length: "short",
         format: "bullets",
         language: "pl",
-      },
+      } as Prisma.InputJsonValue,
     };
 
     return this.prisma.userProfile.create({ data });
@@ -56,8 +56,8 @@ export class ProfilesService {
         keywordsInclude: dto.keywords_include,
         keywordsExclude: dto.keywords_exclude,
         detailLevel: dto.detail_level,
-        responseStyle: dto.response_style,
-        sourcePrefs: dto.source_prefs,
+        responseStyle: dto.response_style ? (dto.response_style as Prisma.InputJsonValue) : Prisma.JsonNull,
+        sourcePrefs: dto.source_prefs ? (dto.source_prefs as Prisma.InputJsonValue) : Prisma.JsonNull,
       },
     });
   }

@@ -10,7 +10,6 @@ import { TopicsModule } from "./modules/topics/topics.module";
 import { AssistantModule } from "./modules/assistant/assistant.module";
 import { SourcesModule } from "./modules/sources/sources.module";
 import { HealthModule } from "./modules/health/health.module";
-import { ObservabilityModule } from "./modules/observability/observability.module";
 
 @Module({
   imports: [
@@ -39,7 +38,6 @@ import { ObservabilityModule } from "./modules/observability/observability.modul
     }),
     PrismaModule,
     TerminusModule,
-    ObservabilityModule,
     AuthModule,
     ProfilesModule,
     TopicsModule,
