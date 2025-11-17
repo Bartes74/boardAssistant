@@ -5,6 +5,7 @@ import { PrismaService } from "../../prisma/prisma.service";
 import { AuthenticatedUser } from "../auth/auth.types";
 import { QueryAssistantDto } from "./dto/query-assistant.dto";
 import { AssistantFeedbackDto } from "./dto/assistant-feedback.dto";
+import { Prisma } from "@prisma/client";
 
 const UUID_REGEX = /^[0-9a-fA-F-]{36}$/;
 
@@ -21,7 +22,29 @@ export class AssistantService {
   }
 
   async query(user: AuthenticatedUser, dto: QueryAssistantDto) {
-    const profile = await this.prisma.userProfile.findUnique({ where: { id: user.userId } });
+    const profile = await this.prisma.userProfile.upsert({
+      where: { id: user.userId },
+      update: {
+        role: user.role,
+        email: user.email,
+      },
+      create: {
+        id: user.userId,
+        role: user.role,
+        email: user.email,
+        regions: [],
+        industries: [],
+        competitorsWatch: [],
+        keywordsInclude: [],
+        keywordsExclude: [],
+        detailLevel: "medium",
+        responseStyle: {
+          length: "short",
+          format: "bullets",
+          language: "pl",
+        } as unknown as Prisma.InputJsonValue,
+      },
+    });
 
     const payload = {
       user_profile: profile ?? { id: user.userId, role: user.role },

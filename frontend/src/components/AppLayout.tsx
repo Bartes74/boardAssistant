@@ -29,7 +29,6 @@ export function AppLayout(): ReactNode {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div>
             <p className="text-xs uppercase tracking-[0.4em] text-sky-400">Board Member Assistant</p>
-            <h1 className="text-xl font-semibold text-white">Panel strategicznych informacji</h1>
           </div>
           <div className="flex items-center gap-3">
             <nav className="hidden gap-2 rounded-full border border-white/10 bg-slate-900/60 px-2 py-1 text-sm shadow-sm shadow-sky-500/10 md:flex">
@@ -53,7 +52,7 @@ export function AppLayout(): ReactNode {
             <div className="flex items-center gap-3 rounded-full border border-white/10 bg-slate-900/60 px-4 py-2 text-sm">
               <div>
                 <p className="font-medium text-white">{session?.user.email ?? 'Nieznany użytkownik'}</p>
-                <p className="text-xs text-slate-400">Supabase session • {session?.user.app_metadata?.role ?? 'BOARD_MEMBER'}</p>
+                <p className="text-xs text-slate-400">Zalogowany użytkownik</p>
               </div>
               <button
                 type="button"

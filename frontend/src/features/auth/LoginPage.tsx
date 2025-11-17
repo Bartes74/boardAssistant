@@ -58,6 +58,7 @@ export function LoginPage() {
               onChange={(event) => setEmail(event.target.value)}
               className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/40"
               placeholder="imię.nazwisko@firma.com"
+              autoComplete="username"
               required
             />
           </div>

@@ -38,7 +38,7 @@ export class ProfilesService {
   }
 
   async getProfile(user: AuthenticatedUser) {
-    const profile = await this.prisma.userProfile.findUnique({ where: { id: user.userId } });
+    const profile = await this.ensureProfile(user);
     if (!profile) {
       throw new NotFoundException("Profil użytkownika nie został znaleziony");
     }

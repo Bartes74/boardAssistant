@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -45,6 +45,7 @@ async function main() {
       throw error;
     }
 
+    await ensureUserProfile(supabase, data.user?.id);
     console.log(`✅ Admin user created with id ${data.user?.id}`);
     return;
   }
@@ -58,7 +59,32 @@ async function main() {
     throw updateError;
   }
 
+  await ensureUserProfile(supabase, user.id);
   console.log(`ℹ️ Existing user ${ADMIN_EMAIL} updated with role ${ADMIN_ROLE}.`);
+}
+
+async function ensureUserProfile(client: SupabaseClient, userId?: string) {
+  if (!userId) {
+    return;
+  }
+
+  const { error } = await client
+    .from("UserProfile")
+    .upsert(
+      {
+        user_id: userId,
+        role: ADMIN_ROLE,
+        email: ADMIN_EMAIL,
+        detail_level: "medium",
+        response_style: { length: "short", format: "bullets", language: "pl" },
+        settings: {},
+      },
+      { onConflict: "user_id" }
+    );
+
+  if (error) {
+    throw error;
+  }
 }
 
 main().catch((error) => {
