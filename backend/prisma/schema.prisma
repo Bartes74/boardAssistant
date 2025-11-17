@@ -1,12 +1,11 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["pgVector"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
-  extensions = [pgvector(map: "vector", dimensions: 768)]
+  extensions = [pgvector(map: "vector")]
 }
 
 enum SourceType {
@@ -93,7 +92,7 @@ model ChunkEmbedding {
   document   Document @relation(fields: [docId], references: [id])
   chunkIndex Int      @map("chunk_index")
   text       String
-  embedding  Vector
+  embedding  Vector   @db.Vector(768)
   metadata   Json?
   createdAt  DateTime @default(now()) @map("created_at")
 
@@ -108,7 +107,7 @@ model Topic {
   lastEventAt       DateTime?        @map("last_event_at")
   topicStatus       TopicStatus      @default(new) @map("topic_status")
   tags              Json?
-  centroidEmbedding Vector?          @map("centroid_embedding")
+  centroidEmbedding Vector?          @map("centroid_embedding") @db.Vector(768)
   documents         Document[]
   userTopicScores   UserTopicScore[]
 }
