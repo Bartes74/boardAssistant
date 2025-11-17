@@ -4,6 +4,7 @@ import { SupabaseModule } from "../../supabase/supabase.module";
 import { AuthService } from "./auth.service";
 import { AuthGuard } from "./auth.guard";
 import { UserContextInterceptor } from "./user-context.interceptor";
+import { RolesGuard } from "./roles.guard";
 
 @Module({
   imports: [SupabaseModule],
@@ -17,7 +18,8 @@ import { UserContextInterceptor } from "./user-context.interceptor";
       provide: APP_INTERCEPTOR,
       useClass: UserContextInterceptor,
     },
+    RolesGuard,
   ],
-  exports: [AuthService],
+  exports: [AuthService, RolesGuard],
 })
 export class AuthModule {}

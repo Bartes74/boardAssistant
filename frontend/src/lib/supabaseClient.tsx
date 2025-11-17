@@ -48,6 +48,7 @@ export function SupabaseProvider({ children }: PropsWithChildren) {
       data: { subscription },
     } = client.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession ?? null);
+      setLoading(false);
     });
 
     return () => {

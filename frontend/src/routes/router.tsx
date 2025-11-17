@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppLayout } from '../components/AppLayout';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { DashboardPage } from '../features/dashboard/DashboardPage';
@@ -6,6 +6,7 @@ import { ChatPage } from '../features/chat/ChatPage';
 import { TopicsPage } from '../features/topics/TopicsPage';
 import { ProfilePage } from '../features/profile/ProfilePage';
 import { LoginPage } from '../features/auth/LoginPage';
+import { AdminPage } from '../features/admin/AdminPage';
 
 export const router = createBrowserRouter([
   {
@@ -35,6 +36,14 @@ export const router = createBrowserRouter([
         path: '/settings/profile',
         element: <ProfilePage />,
       },
+      {
+        path: '/admin',
+        element: <AdminPage />,
+      },
     ],
+  },
+  {
+    path: '*',
+    element: <Navigate to="/auth/login" replace />,
   },
 ]);

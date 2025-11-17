@@ -10,6 +10,7 @@ import { TopicsModule } from "./modules/topics/topics.module";
 import { AssistantModule } from "./modules/assistant/assistant.module";
 import { SourcesModule } from "./modules/sources/sources.module";
 import { HealthModule } from "./modules/health/health.module";
+import { AdminModule } from "./modules/admin/admin.module";
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { HealthModule } from "./modules/health/health.module";
     AssistantModule,
     SourcesModule,
     HealthModule,
+    AdminModule,
   ],
 })
 export class AppModule {}

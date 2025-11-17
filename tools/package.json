@@ -5,12 +5,14 @@
   "scripts": {
     "lint": "eslint --ext .ts .",
     "generate": "ts-node fetch-sources.ts",
-    "fetch": "ts-node fetch-sources.ts"
+    "fetch": "ts-node fetch-sources.ts",
+    "create-admin": "ts-node create-admin-user.ts"
   },
   "dependencies": {
     "axios": "^1.7.7",
     "date-fns": "^4.1.0",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "@supabase/supabase-js": "^2.45.0"
   },
   "devDependencies": {
     "@types/node": "^20.11.30",
