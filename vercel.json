@@ -1,5 +1,5 @@
 {
-  "installCommand": "npm install -g pnpm@9.12.0 && pnpm install",
+  "installCommand": "npx -y pnpm@9.12.0 install",
   "buildCommand": "pnpm --filter ./backend build && pnpm --filter ./frontend build",
   "outputDirectory": "frontend/dist",
   "rewrites": [
