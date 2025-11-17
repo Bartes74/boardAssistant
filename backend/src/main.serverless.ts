@@ -2,8 +2,8 @@ import { ExpressAdapter } from "@nestjs/platform-express";
 import { INestApplication } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import express, { Express } from "express";
-import serverlessExpress, { Handler } from "@vendia/serverless-express";
-import { Context, APIGatewayProxyEvent } from "aws-lambda";
+import serverlessExpress from "@vendia/serverless-express";
+import type { APIGatewayProxyEvent, Context, Handler } from "aws-lambda";
 import { AppModule } from "./app.module";
 import { Logger } from "nestjs-pino";
 
@@ -29,9 +29,9 @@ async function bootstrap(): Promise<Handler> {
   return cachedServer;
 }
 
-export const handler: Handler = async (event: APIGatewayProxyEvent, context: Context) => {
+export const handler: Handler = async (event: APIGatewayProxyEvent, context: Context, callback) => {
   const server = await bootstrap();
-  return server(event, context);
+  return server(event, context, callback);
 };
 
 export async function closeApp() {

@@ -1,5 +1,5 @@
 import { INestApplication, Injectable, Logger, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 
 type PrismaAuthContext = {
   userId: string;
@@ -7,7 +7,10 @@ type PrismaAuthContext = {
 };
 
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+export class PrismaService
+  extends PrismaClient<Prisma.PrismaClientOptions, "beforeExit">
+  implements OnModuleInit, OnModuleDestroy
+{
   private readonly logger = new Logger(PrismaService.name);
   private authContext?: PrismaAuthContext;
   private settingAuthContext = false;

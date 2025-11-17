@@ -4,7 +4,6 @@ import { DocumentStatus, Prisma } from "@prisma/client";
 import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../../prisma/prisma.service";
 import { SupabaseService } from "../../supabase/supabase.service";
-import { fallbackEmbeddingFromText } from "../../utils/embedding";
 import { IngestSourceDto } from "./dto/ingest-source.dto";
 
 const UUID_REGEX = /^[0-9a-fA-F-]{36}$/;
@@ -25,11 +24,15 @@ export class SourcesService {
   async ingest(payload: IngestSourceDto) {
     const sourceId = this.ensureUuid(payload.source_id);
 
+    const sourceMetadata = payload.documents[0]?.metadata as { source_name?: unknown } | undefined;
+    const sourceName =
+      typeof sourceMetadata?.source_name === "string" ? sourceMetadata.source_name : `Źródło ${sourceId}`;
+
     const source = await this.prisma.source.upsert({
       where: { id: sourceId },
       create: {
         id: sourceId,
-        name: payload.documents[0]?.metadata?.source_name ?? `Źródło ${sourceId}`,
+        name: sourceName,
         type: "other",
       },
       update: { updatedAt: new Date() },
@@ -45,6 +48,8 @@ export class SourcesService {
         : null;
 
       const status = this.resolveStatus(existing, doc.status);
+      const documentMetadata = doc.metadata ? (doc.metadata as unknown as Prisma.InputJsonValue) : Prisma.JsonNull;
+
       const data: Prisma.DocumentUpsertArgs["create"] = {
         sourceId: source.id,
         canonicalUrl: doc.canonical_url,
@@ -55,7 +60,7 @@ export class SourcesService {
         status,
         docType: doc.doc_type ?? "news",
         topicId,
-        metadata: doc.chunks[0]?.metadata ?? {},
+        metadata: documentMetadata,
       };
 
       const document = await this.prisma.document.upsert({
@@ -65,18 +70,6 @@ export class SourcesService {
           ...data,
           updatedAt: new Date(),
         },
-      });
-
-      await this.prisma.chunkEmbedding.deleteMany({ where: { docId: document.id } });
-
-      await this.prisma.chunkEmbedding.createMany({
-        data: doc.chunks.map((chunk, index) => ({
-          docId: document.id,
-          chunkIndex: index,
-          text: chunk.text,
-          embedding: chunk.embedding ?? fallbackEmbeddingFromText(chunk.text),
-          metadata: chunk.metadata ?? {},
-        })),
       });
 
       await this.persistRawDocument(document.id, doc);

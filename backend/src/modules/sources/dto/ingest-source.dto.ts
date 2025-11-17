@@ -28,6 +28,9 @@ class DocumentDto {
   @IsString()
   canonical_url!: string;
 
+  @IsOptional()
+  metadata?: Record<string, unknown>;
+
   @IsString()
   title!: string;
 
