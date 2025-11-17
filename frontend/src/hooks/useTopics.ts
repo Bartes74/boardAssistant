@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { useSessionContext } from '@supabase/auth-helpers-react';
 import { createApiClient } from '../api/client';
+import { useSupabaseAuth } from '../lib/supabaseClient';
 
 export interface TopicSummary {
   id: string;
@@ -24,7 +24,7 @@ export interface TopicDetail extends TopicSummary {
 }
 
 export function useTopics() {
-  const { session } = useSessionContext();
+  const { session } = useSupabaseAuth();
   return useQuery<TopicSummary[]>({
     queryKey: ['topics'],
     queryFn: async () => {
@@ -37,7 +37,7 @@ export function useTopics() {
 }
 
 export function useTopic(topicId: string) {
-  const { session } = useSessionContext();
+  const { session } = useSupabaseAuth();
   return useQuery<TopicDetail>({
     queryKey: ['topics', topicId],
     queryFn: async () => {

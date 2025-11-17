@@ -1,6 +1,6 @@
 import { FormEvent, useState } from 'react';
-import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import { toast } from 'sonner';
+import { useSupabaseClient } from '../../lib/supabaseClient';
 
 export function LoginPage() {
   const supabase = useSupabaseClient();

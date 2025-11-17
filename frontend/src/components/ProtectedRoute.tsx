@@ -1,13 +1,13 @@
 import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useSessionContext } from '@supabase/auth-helpers-react';
+import { useSupabaseAuth } from '../lib/supabaseClient';
 
 interface ProtectedRouteProps {
   children: ReactNode;
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { session, isLoading } = useSessionContext();
+  const { session, isLoading } = useSupabaseAuth();
   const location = useLocation();
 
   if (isLoading) {

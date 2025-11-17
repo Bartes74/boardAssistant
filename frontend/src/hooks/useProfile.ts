@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useSessionContext } from '@supabase/auth-helpers-react';
 import { createApiClient } from '../api/client';
+import { useSupabaseAuth } from '../lib/supabaseClient';
 
 export interface UserProfile {
   id: string;
@@ -19,7 +19,7 @@ export interface UserProfile {
 }
 
 export function useProfile() {
-  const { session } = useSessionContext();
+  const { session } = useSupabaseAuth();
   return useQuery<UserProfile>({
     queryKey: ['profile'],
     queryFn: async () => {
@@ -32,7 +32,7 @@ export function useProfile() {
 }
 
 export function useUpdateProfile() {
-  const { session } = useSessionContext();
+  const { session } = useSupabaseAuth();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Partial<UserProfile>) => {

@@ -3,3 +3,8 @@ node_modules
 backend/dist
 frontend/dist
 tools/dist
+*.tsbuildinfo
+frontend/scripts/*.js
+frontend/scripts/*.d.ts
+frontend/vite.config.js
+frontend/vite.config.d.ts

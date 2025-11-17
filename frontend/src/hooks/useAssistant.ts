@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
-import { useSessionContext } from '@supabase/auth-helpers-react';
 import { createApiClient } from '../api/client';
+import { useSupabaseAuth } from '../lib/supabaseClient';
 
 export interface AssistantResponse {
   query_id: string;
@@ -13,7 +13,7 @@ export interface AssistantResponse {
 }
 
 export function useAssistantQuery() {
-  const { session } = useSessionContext();
+  const { session } = useSupabaseAuth();
   return useMutation<AssistantResponse, unknown, { question: string }>({
     mutationFn: async ({ question }) => {
       const api = createApiClient(session?.access_token);
@@ -24,7 +24,7 @@ export function useAssistantQuery() {
 }
 
 export function useAssistantFeedback() {
-  const { session } = useSessionContext();
+  const { session } = useSupabaseAuth();
   return useMutation({
     mutationFn: async (payload: { queryId: string; importantTopics?: string[] }) => {
       const api = createApiClient(session?.access_token);

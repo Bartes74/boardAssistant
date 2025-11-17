@@ -1,8 +1,8 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { ReactNode } from 'react';
 import clsx from 'clsx';
-import { useSessionContext, useSupabaseClient } from '@supabase/auth-helpers-react';
 import { ThemeToggle } from './ThemeToggle';
+import { useSupabaseAuth, useSupabaseClient } from '../lib/supabaseClient';
 
 const navItems: Array<{ to: string; label: string; hotkey?: string }> = [
   { to: '/', label: 'Co nowego', hotkey: '1' },
@@ -12,7 +12,7 @@ const navItems: Array<{ to: string; label: string; hotkey?: string }> = [
 ];
 
 export function AppLayout(): ReactNode {
-  const { session } = useSessionContext();
+  const { session } = useSupabaseAuth();
   const supabase = useSupabaseClient();
   const navigate = useNavigate();
 
