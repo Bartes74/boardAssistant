@@ -1,13 +1,6 @@
 {
   "buildCommand": "pnpm install && pnpm --filter ./backend build && pnpm --filter ./frontend build",
   "outputDirectory": "frontend/dist",
-  "functions": {
-    "api/core-service.ts": {
-      "runtime": "nodejs18.x",
-      "memory": 1024,
-      "maxDuration": 60
-    }
-  },
   "rewrites": [
     { "source": "/api/rag", "destination": "/api/rag.ts" },
     { "source": "/api/:path*", "destination": "/api/core-service.ts" },
