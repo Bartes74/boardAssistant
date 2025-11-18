@@ -14,8 +14,8 @@ const cardVariants = {
 };
 
 export function DashboardPage() {
-  const { data: topics, isLoading } = useTopics();
-  const { mutate, data: assistantResponse } = useAssistantQuery();
+  const { data: topics, isLoading: isTopicsLoading, error: topicsError } = useTopics();
+  const { mutate, data: assistantResponse, isPending: isAssistantPending, error: assistantError } = useAssistantQuery();
 
   useEffect(() => {
     if (!assistantResponse) {
@@ -23,7 +23,7 @@ export function DashboardPage() {
     }
   }, [assistantResponse, mutate]);
 
-  const topTopics = topics?.slice(0, 4) ?? [];
+  const topTopics = topics?.topics?.slice(0, 4) ?? [];
 
   return (
     <div className="space-y-8">
@@ -39,7 +39,14 @@ export function DashboardPage() {
             <span className="text-sm uppercase tracking-[0.4em] text-sky-400">TL;DR tygodnia</span>
           </div>
           <h2 className="mt-4 text-2xl font-semibold text-white">Strategiczne podsumowanie dla Ciebie</h2>
-          {assistantResponse ? (
+          {assistantError ? (
+            <div className="mt-4 rounded-xl border border-rose-500/50 bg-rose-500/10 p-4">
+              <p className="text-sm font-semibold text-rose-300">Błąd ładowania podsumowania</p>
+              <p className="mt-1 text-xs text-rose-400">
+                {assistantError instanceof Error ? assistantError.message : 'Nie udało się pobrać danych z asystenta'}
+              </p>
+            </div>
+          ) : assistantResponse ? (
             <>
               <p className="mt-4 text-base leading-relaxed text-slate-200">{assistantResponse.tldr}</p>
               <div className="mt-6 grid gap-6 md:grid-cols-2">
@@ -66,9 +73,9 @@ export function DashboardPage() {
                 </div>
               </div>
             </>
-          ) : (
+          ) : isAssistantPending ? (
             <p className="mt-4 animate-pulse text-sm text-slate-400">Ładowanie silnika wiedzy…</p>
-          )}
+          ) : null}
         </motion.section>
         <motion.section
           initial={{ opacity: 0, y: 20 }}
@@ -80,7 +87,16 @@ export function DashboardPage() {
             <Files className="h-5 w-5 text-sky-400" />
             Puls tematów
           </h2>
-          {isLoading && <p className="mt-4 text-sm text-slate-400">Wczytywanie tematów…</p>}
+          {topicsError ? (
+            <div className="mt-4 rounded-xl border border-rose-500/50 bg-rose-500/10 p-4">
+              <p className="text-sm font-semibold text-rose-300">Błąd ładowania tematów</p>
+              <p className="mt-1 text-xs text-rose-400">
+                {topicsError instanceof Error ? topicsError.message : 'Nie udało się pobrać listy tematów'}
+              </p>
+            </div>
+          ) : isTopicsLoading ? (
+            <p className="mt-4 text-sm text-slate-400">Wczytywanie tematów…</p>
+          ) : null}
           <div className="mt-4 space-y-3">
             {topTopics.map((topic, index) => (
               <motion.article

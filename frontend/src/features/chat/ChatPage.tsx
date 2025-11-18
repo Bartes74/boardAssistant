@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 
 export function ChatPage() {
   const [question, setQuestion] = useState('Co nowego w moich tematach ESG?');
-  const { mutateAsync, data, isPending } = useAssistantQuery();
+  const { mutateAsync, data, isPending, error } = useAssistantQuery();
   const feedback = useAssistantFeedback();
 
   const articles = useMemo(() => data?.articles ?? [], [data]);
@@ -14,13 +14,19 @@ export function ChatPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!question.trim()) return;
-    const response = await mutateAsync({ question });
-    if (response.topics.length) {
-      feedback.mutate({
-        queryId: response.query_id,
-        importantTopics: response.topics.map((t) => t.id ?? '').filter(Boolean),
-      });
-      toast.success('Zebraliśmy Twój feedback – dopasowujemy rekomendacje.');
+    try {
+      const response = await mutateAsync({ question });
+      if (response.topics.length) {
+        feedback.mutate({
+          queryId: response.query_id,
+          importantTopics: response.topics.map((t) => t.id ?? '').filter(Boolean),
+        });
+        toast.success('Zebraliśmy Twój feedback – dopasowujemy rekomendacje.');
+      }
+    } catch (err) {
+      // Błąd jest już obsłużony przez React Query, ale możemy dodać dodatkowy toast
+      const message = err instanceof Error ? err.message : 'Nie udało się uzyskać odpowiedzi od asystenta';
+      toast.error(message);
     }
   }
 
@@ -48,7 +54,14 @@ export function ChatPage() {
           </button>
         </form>
         <div className="mt-6 flex-1 space-y-4 overflow-y-auto pr-2">
-          {data ? (
+          {error ? (
+            <div className="rounded-xl border border-rose-500/50 bg-rose-500/10 p-4">
+              <p className="text-sm font-semibold text-rose-300">Błąd podczas komunikacji z asystentem</p>
+              <p className="mt-1 text-xs text-rose-400">
+                {error instanceof Error ? error.message : 'Nie udało się uzyskać odpowiedzi. Spróbuj ponownie.'}
+              </p>
+            </div>
+          ) : data ? (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}

@@ -7,6 +7,7 @@ import {
 import { UserRole } from "@prisma/client";
 import type { User } from "@supabase/supabase-js";
 import { SupabaseService } from "../../supabase/supabase.service";
+import { validatePassword } from "../../utils/password-validator";
 import { CreateAdminUserDto } from "./dto/create-admin-user.dto";
 import { UpdateAdminUserDto } from "./dto/update-admin-user.dto";
 
@@ -22,21 +23,46 @@ export interface AdminUser {
 export class AdminService {
   constructor(private readonly supabaseService: SupabaseService) {}
 
-  async listUsers(): Promise<AdminUser[]> {
+  async listUsers(params?: { page?: number; perPage?: number }): Promise<{
+    users: AdminUser[];
+    pagination: { total: number; page: number; perPage: number; hasMore: boolean };
+  }> {
     const client = this.supabaseService.getClient();
+    const page = params?.page ?? 1;
+    const perPage = Math.min(params?.perPage ?? 50, 1000); // Max 1000 per Supabase limit
+
     const { data, error } = await client.auth.admin.listUsers({
-      perPage: 1000,
-      page: 1,
+      perPage,
+      page,
     });
 
     if (error) {
       throw new InternalServerErrorException(error.message);
     }
 
-    return (data?.users ?? []).map((user) => this.mapUser(user));
+    const users = (data?.users ?? []).map((user) => this.mapUser(user));
+    const total = data?.total ?? users.length;
+    const hasMore = page * perPage < total;
+
+    return {
+      users,
+      pagination: {
+        total,
+        page,
+        perPage,
+        hasMore,
+      },
+    };
   }
 
   async createUser(dto: CreateAdminUserDto): Promise<AdminUser> {
+    const passwordValidation = validatePassword(dto.password);
+    if (!passwordValidation.valid) {
+      throw new BadRequestException(
+        `Niepoprawne hasło: ${passwordValidation.errors.join(", ")}`
+      );
+    }
+
     const client = this.supabaseService.getClient();
 
     const { data, error } = await client.auth.admin.createUser({
@@ -67,6 +93,12 @@ export class AdminService {
     }
 
     if (dto.password) {
+      const passwordValidation = validatePassword(dto.password);
+      if (!passwordValidation.valid) {
+        throw new BadRequestException(
+          `Niepoprawne hasło: ${passwordValidation.errors.join(", ")}`
+        );
+      }
       payload.password = dto.password;
     }
 

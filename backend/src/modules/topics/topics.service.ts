@@ -17,23 +17,38 @@ export class TopicsService {
       where.title = { contains: query.search, mode: "insensitive" };
     }
 
-    const topics = await this.prisma.topic.findMany({
-      where,
-      take: query.limit ?? 20,
-      orderBy: { lastEventAt: "desc" },
-      include: {
-        userTopicScores: {
-          where: { userId: user.userId },
-        },
-      },
-    });
+    const limit = query.limit ?? 20;
+    const offset = query.offset ?? 0;
 
-    return topics.map((topic) => ({
-      ...topic,
-      userScore: topic.userTopicScores[0]?.score ?? 0,
-      pinned: topic.userTopicScores[0]?.pinned ?? false,
-      hidden: topic.userTopicScores[0]?.hidden ?? false,
-    }));
+    const [topics, total] = await Promise.all([
+      this.prisma.topic.findMany({
+        where,
+        take: limit,
+        skip: offset,
+        orderBy: { lastEventAt: "desc" },
+        include: {
+          userTopicScores: {
+            where: { userId: user.userId },
+          },
+        },
+      }),
+      this.prisma.topic.count({ where }),
+    ]);
+
+    return {
+      topics: topics.map((topic) => ({
+        ...topic,
+        userScore: topic.userTopicScores[0]?.score ?? 0,
+        pinned: topic.userTopicScores[0]?.pinned ?? false,
+        hidden: topic.userTopicScores[0]?.hidden ?? false,
+      })),
+      pagination: {
+        total,
+        limit,
+        offset,
+        hasMore: offset + limit < total,
+      },
+    };
   }
 
   async getTopic(user: AuthenticatedUser, topicId: string) {

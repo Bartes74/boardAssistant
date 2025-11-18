@@ -5,9 +5,11 @@ import { AuthService } from "./auth.service";
 import { AuthGuard } from "./auth.guard";
 import { UserContextInterceptor } from "./user-context.interceptor";
 import { RolesGuard } from "./roles.guard";
+import { AuthController } from "./auth.controller";
 
 @Module({
   imports: [SupabaseModule],
+  controllers: [AuthController],
   providers: [
     AuthService,
     {

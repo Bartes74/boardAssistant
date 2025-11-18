@@ -108,7 +108,12 @@ export function AdminPage() {
 
   const handleSelfPasswordChange = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!selfPassword || selfPassword.length < 8) {
+    if (!selfPassword) {
+      toast.error('Podaj nowe hasło.');
+      return;
+    }
+    // Walidacja po stronie klienta (podstawowa - pełna walidacja po stronie serwera)
+    if (selfPassword.length < 8) {
       toast.error('Hasło powinno mieć co najmniej 8 znaków.');
       return;
     }

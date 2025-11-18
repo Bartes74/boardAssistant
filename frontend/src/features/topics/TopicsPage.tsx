@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTopic, useTopics } from '../../hooks/useTopics';
-import { Pin, EyeOff } from 'lucide-react';
+import { Pin, EyeOff, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const listVariants = {
   hidden: { opacity: 0, y: 10 },
@@ -9,17 +9,32 @@ const listVariants = {
 };
 
 export function TopicsPage() {
-  const { data: topics } = useTopics();
+  const [page, setPage] = useState(0);
+  const pageSize = 20;
+  const { data: topicsData, isLoading: isTopicsLoading, error: topicsError } = useTopics({ limit: pageSize, offset: page * pageSize });
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
-  const { data: topicDetail } = useTopic(selectedTopic ?? '');
+  const { data: topicDetail, isLoading: isTopicDetailLoading, error: topicDetailError } = useTopic(selectedTopic ?? '');
+
+  const topics = topicsData?.topics ?? [];
+  const pagination = topicsData?.pagination;
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr,1.6fr]">
       <section className="rounded-3xl border border-white/5 bg-slate-900/60 p-6">
         <h2 className="text-lg font-semibold text-white">Tematy strategiczne</h2>
         <p className="text-sm text-slate-400">Zobacz najważniejsze wątki i oceń ich priorytet.</p>
-        <div className="mt-4 space-y-3">
-          {topics?.map((topic, index) => (
+        {topicsError ? (
+          <div className="mt-4 rounded-xl border border-rose-500/50 bg-rose-500/10 p-4">
+            <p className="text-sm font-semibold text-rose-300">Błąd ładowania tematów</p>
+            <p className="mt-1 text-xs text-rose-400">
+              {topicsError instanceof Error ? topicsError.message : 'Nie udało się pobrać listy tematów'}
+            </p>
+          </div>
+        ) : isTopicsLoading ? (
+          <p className="mt-4 text-sm text-slate-400">Ładowanie tematów...</p>
+        ) : (
+          <div className="mt-4 space-y-3">
+            {topics.map((topic, index) => (
             <motion.button
               key={topic.id}
               type="button"
@@ -50,11 +65,48 @@ export function TopicsPage() {
               </div>
               <p className="mt-2 text-xs text-slate-400">Ważność: {topic.userScore.toFixed(1)}</p>
             </motion.button>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
+        {pagination && pagination.total > pageSize && (
+          <div className="mt-4 flex items-center justify-between">
+            <p className="text-xs text-slate-400">
+              Strona {page + 1} z {Math.ceil(pagination.total / pageSize)}
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                disabled={page === 0}
+                className="rounded-lg bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setPage((p) => p + 1)}
+                disabled={!pagination.hasMore}
+                className="rounded-lg bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </section>
       <section className="rounded-3xl border border-white/5 bg-slate-900/60 p-6">
-        {topicDetail ? (
+        {topicDetailError ? (
+          <div className="rounded-xl border border-rose-500/50 bg-rose-500/10 p-4">
+            <p className="text-sm font-semibold text-rose-300">Błąd ładowania szczegółów tematu</p>
+            <p className="mt-1 text-xs text-rose-400">
+              {topicDetailError instanceof Error ? topicDetailError.message : 'Nie udało się pobrać szczegółów tematu'}
+            </p>
+          </div>
+        ) : isTopicDetailLoading && selectedTopic ? (
+          <div className="flex h-full items-center justify-center text-sm text-slate-400">
+            Ładowanie szczegółów...
+          </div>
+        ) : topicDetail ? (
           <>
             <div className="flex items-start justify-between gap-4">
               <div>

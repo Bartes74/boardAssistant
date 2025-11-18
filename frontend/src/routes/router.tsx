@@ -7,6 +7,7 @@ import { TopicsPage } from '../features/topics/TopicsPage';
 import { ProfilePage } from '../features/profile/ProfilePage';
 import { LoginPage } from '../features/auth/LoginPage';
 import { AdminPage } from '../features/admin/AdminPage';
+import { SecurityPage } from '../features/security/SecurityPage';
 
 export const router = createBrowserRouter([
   {
@@ -39,6 +40,10 @@ export const router = createBrowserRouter([
       {
         path: '/admin',
         element: <AdminPage />,
+      },
+      {
+        path: '/security',
+        element: <SecurityPage />,
       },
     ],
   },

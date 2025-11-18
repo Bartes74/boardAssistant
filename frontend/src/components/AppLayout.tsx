@@ -3,12 +3,16 @@ import { ReactNode } from 'react';
 import clsx from 'clsx';
 import { ThemeToggle } from './ThemeToggle';
 import { useSupabaseAuth, useSupabaseClient } from '../lib/supabaseClient';
+import { useAuth } from '../hooks/useAuth';
 
 export function AppLayout(): ReactNode {
   const { session } = useSupabaseAuth();
+  const { data: authUser } = useAuth();
   const supabase = useSupabaseClient();
   const navigate = useNavigate();
-  const isAdmin = session?.user.app_metadata?.role === 'ADMIN';
+  const userRole = authUser?.role || session?.user.app_metadata?.role;
+  const isAdmin = userRole === 'ADMIN';
+  const isSecurityOfficer = userRole === 'SECURITY_OFFICER' || isAdmin;
 
   const navItems: Array<{ to: string; label: string; hotkey?: string }> = [
     { to: '/', label: 'Co nowego', hotkey: '1' },
@@ -16,6 +20,7 @@ export function AppLayout(): ReactNode {
     { to: '/topics', label: 'Tematy', hotkey: '3' },
     { to: '/settings/profile', label: 'Profil', hotkey: '4' },
     ...(isAdmin ? [{ to: '/admin', label: 'Administracja', hotkey: '5' as const }] : []),
+    ...(isSecurityOfficer ? [{ to: '/security', label: 'Bezpieczeństwo', hotkey: '6' as const }] : []),
   ];
 
   async function handleSignOut() {

@@ -13,7 +13,14 @@ export function LoginPage() {
 
   useEffect(() => {
     if (!isLoading && session) {
-      navigate(session.user.app_metadata?.role === 'ADMIN' ? '/admin' : '/', { replace: true });
+      const role = session.user.app_metadata?.role;
+      if (role === 'ADMIN') {
+        navigate('/admin', { replace: true });
+      } else if (role === 'SECURITY_OFFICER') {
+        navigate('/security', { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
     }
   }, [isLoading, session, navigate]);
 
@@ -31,7 +38,14 @@ export function LoginPage() {
       }
       if (data.session) {
         toast.success('Zalogowano pomyślnie.');
-        navigate(data.user?.app_metadata?.role === 'ADMIN' ? '/admin' : '/', { replace: true });
+        const role = data.user?.app_metadata?.role;
+        if (role === 'ADMIN') {
+          navigate('/admin', { replace: true });
+        } else if (role === 'SECURITY_OFFICER') {
+          navigate('/security', { replace: true });
+        } else {
+          navigate('/', { replace: true });
+        }
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Nie udało się zalogować.';

@@ -4,6 +4,7 @@ import { DocumentStatus, Prisma } from "@prisma/client";
 import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../../prisma/prisma.service";
 import { SupabaseService } from "../../supabase/supabase.service";
+import { AuthenticatedUser } from "../auth/auth.types";
 import { IngestSourceDto } from "./dto/ingest-source.dto";
 
 const UUID_REGEX = /^[0-9a-fA-F-]{36}$/;
@@ -21,7 +22,7 @@ export class SourcesService {
     this.storageBucket = configService.get<string>("supabase.storageBucket") ?? "documents";
   }
 
-  async ingest(payload: IngestSourceDto) {
+  async ingest(user: AuthenticatedUser, payload: IngestSourceDto) {
     const sourceId = this.ensureUuid(payload.source_id);
 
     const sourceMetadata = payload.documents[0]?.metadata as { source_name?: unknown } | undefined;
@@ -77,7 +78,20 @@ export class SourcesService {
       results.push({ documentId: document.id, status });
     }
 
-    this.logger.log(`Zainjestowano ${results.length} dokumentów z ${payload.source_id}`);
+    // Logowanie audytu
+    await this.logAudit(user, {
+      action: "source_ingest",
+      targetType: "source",
+      targetId: sourceId,
+      metadata: {
+        documentsCount: results.length,
+        sourceName,
+      },
+    }).catch((error) => {
+      this.logger.warn(`Nie udało się zapisać logu audytu: ${error}`);
+    });
+
+    this.logger.log(`Zainjestowano ${results.length} dokumentów z ${payload.source_id} przez użytkownika ${user.userId} (${user.role})`);
     return { status: "ok", processed: results };
   }
 
@@ -117,5 +131,26 @@ export class SourcesService {
     } catch (error) {
       this.logger.warn(`Nie udało się zapisać dokumentu ${documentId} w Supabase Storage: ${error}`);
     }
+  }
+
+  private async logAudit(
+    user: AuthenticatedUser,
+    data: {
+      action: string;
+      targetType: string;
+      targetId?: string;
+      metadata?: Record<string, unknown>;
+    }
+  ) {
+    await this.prisma.auditLog.create({
+      data: {
+        actorId: user.userId,
+        actorRole: user.role,
+        action: data.action,
+        targetType: data.targetType,
+        targetId: data.targetId ?? null,
+        metadata: data.metadata ? (data.metadata as unknown as Prisma.InputJsonValue) : Prisma.JsonNull,
+      },
+    });
   }
 }

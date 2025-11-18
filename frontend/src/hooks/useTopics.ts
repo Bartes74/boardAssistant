@@ -23,13 +23,29 @@ export interface TopicDetail extends TopicSummary {
   }>;
 }
 
-export function useTopics() {
+export interface TopicsResponse {
+  topics: TopicSummary[];
+  pagination: {
+    total: number;
+    limit: number;
+    offset: number;
+    hasMore: boolean;
+  };
+}
+
+export function useTopics(params?: { limit?: number; offset?: number; status?: string; search?: string }) {
   const { session } = useSupabaseAuth();
-  return useQuery<TopicSummary[]>({
-    queryKey: ['topics'],
+  return useQuery<TopicsResponse>({
+    queryKey: ['topics', params],
     queryFn: async () => {
       const api = createApiClient(session?.access_token);
-      const { data } = await api.get('/topics');
+      const searchParams = new URLSearchParams();
+      if (params?.limit) searchParams.set('limit', params.limit.toString());
+      if (params?.offset) searchParams.set('offset', params.offset.toString());
+      if (params?.status) searchParams.set('status', params.status);
+      if (params?.search) searchParams.set('search', params.search);
+      const queryString = searchParams.toString();
+      const { data } = await api.get<TopicsResponse>(`/topics${queryString ? `?${queryString}` : ''}`);
       return data;
     },
     enabled: Boolean(session?.access_token),
