@@ -25,7 +25,10 @@ export class TopicsService {
         where,
         take: limit,
         skip: offset,
-        orderBy: { lastEventAt: "desc" },
+        orderBy: [
+          { lastEventAt: "desc" },
+          { createdAt: "desc" },
+        ],
         include: {
           userTopicScores: {
             where: { userId: user.userId },

@@ -56,6 +56,12 @@ export class AssistantService {
 
     try {
       const { data } = await this.client.post("/answer", payload);
+      
+      // Walidacja odpowiedzi z RAG service
+      if (!data || typeof data !== "object") {
+        throw new Error("Nieprawidłowa odpowiedź z RAG service");
+      }
+
       const topicIds: string[] = Array.isArray(data?.topics)
         ? data.topics
             .map((topic: { id?: string }) => topic.id)
@@ -75,8 +81,13 @@ export class AssistantService {
             raw_topics: data?.topics ?? [],
           },
         },
+      }).catch((error) => {
+        this.logger.warn(`Nie udało się zapisać logu zapytania: ${error}`);
+        // Kontynuuj mimo błędu zapisu logu
+        return null;
       });
 
+      // Aktualizuj scoring tematów (nie blokuj odpowiedzi przy błędzie)
       await Promise.all(
         topicIds.map((topicId) =>
           this.prisma.userTopicScore.upsert({
@@ -95,19 +106,45 @@ export class AssistantService {
               lastSeenAt: new Date(),
               interactionsCount: 1,
             },
+          }).catch((error) => {
+            this.logger.warn(`Nie udało się zaktualizować scoringu tematu ${topicId}: ${error}`);
+            return null;
           })
         )
       );
 
-      return { ...data, query_id: queryLog.id };
+      return { 
+        ...data, 
+        query_id: queryLog?.id ?? `temp-${Date.now()}`,
+        // Upewnij się, że wszystkie wymagane pola są obecne
+        tldr: data.tldr ?? "Brak podsumowania",
+        events: Array.isArray(data.events) ? data.events : [],
+        articles: Array.isArray(data.articles) ? data.articles : [],
+        actions: Array.isArray(data.actions) ? data.actions : [],
+        topics: Array.isArray(data.topics) ? data.topics : [],
+        confidence: typeof data.confidence === "number" ? data.confidence : 0,
+      };
     } catch (error) {
       this.logger.error(`Błąd połączenia z rag-service: ${error}`);
+      
+      // Jeśli to błąd sieciowy lub timeout, rzuć wyjątek
+      if (axios.isAxiosError(error)) {
+        if (error.code === "ECONNREFUSED" || error.code === "ETIMEDOUT") {
+          throw new Error(`RAG service nie jest dostępny: ${error.message}`);
+        }
+        if (error.response?.status >= 500) {
+          throw new Error(`Błąd serwera RAG: ${error.response.status} ${error.response.statusText}`);
+        }
+      }
+      
+      // Dla innych błędów zwróć fallback
       return {
         query_id: `fallback-${Date.now()}`,
-        tldr: "Brak odpowiedzi z usługi wiedzy",
+        tldr: "Brak odpowiedzi z usługi wiedzy. Sprawdź konfigurację RAG service.",
         events: [],
         articles: [],
         actions: [],
+        topics: [],
         confidence: 0,
       };
     }
