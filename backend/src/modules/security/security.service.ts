@@ -30,9 +30,6 @@ export class SecurityService {
         take: params.limit,
         skip: params.offset,
         orderBy: { createdAt: "desc" },
-        include: {
-          // Możemy dodać relacje jeśli będą potrzebne
-        },
       }),
       this.prisma.auditLog.count({ where }),
     ]);
