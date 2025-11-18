@@ -132,8 +132,10 @@ export class AssistantService {
         if (error.code === "ECONNREFUSED" || error.code === "ETIMEDOUT") {
           throw new Error(`RAG service nie jest dostępny: ${error.message}`);
         }
-        if (error.response?.status >= 500) {
-          throw new Error(`Błąd serwera RAG: ${error.response.status} ${error.response.statusText}`);
+        if (error.response && error.response.status >= 500) {
+          const status = error.response.status;
+          const statusText = error.response.statusText || "Unknown error";
+          throw new Error(`Błąd serwera RAG: ${status} ${statusText}`);
         }
       }
       
